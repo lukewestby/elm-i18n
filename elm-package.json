@@ -1,7 +1,7 @@
 {
     "version": "1.0.0",
     "summary": "Easy i18n for Elm apps",
-    "repository": "https://github.com/user/project.git",
+    "repository": "https://github.com/lukewestby/elm-i18n.git",
     "license": "MIT",
     "source-directories": [
         "src"
