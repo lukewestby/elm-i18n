@@ -15,57 +15,60 @@ encouraged. If you'd like to help or have ideas, get in touch with me at
 
 ## Example
 ```elm
-import I18n exposing (..)
+import I18n exposing (withLanguage, createLookup, Language(Language))
 -- ...
 
-currentLang : String
-currentLang =
-    "en-us"
+english : Language
+english =
+    Language "en-us"
 
-lookup : String -> String -> List String -> String
+french : Language
+french =
+    Language "fr-fr"
+
+german : Language
+german =
+    Language "de-de"
+
+lookup : Language -> String -> List String -> String
 lookup =
-    I18n.create <| config
-        $ "en-us"
-            ~ ("favColor", "{0} is my favorite color")
-        $ "en-gb"
-            ~ ("favColor", "{0} is my favourite colour")
+    createLookup
+        [ withLanguage
+            french
+            [ ( "good day", "bonjour" )
+            , ( "I am {0} years old.", "J'ai {0} ans." )
+            ]
+        , withLanguage
+            german
+            [ ( "good day", "guten tag" )
+            , ( "I am {0} years old.", "Ich bin {0} Jahre alt." )
+            ]
+        ]
+
+currentLang : Language
+currentLang =
+  french
 
 i18nText : String -> List String -> String
 i18nText =
     lookup currentLang
 
 main =
-    show (i18nText "favColor" ["Blue"])
+    show (i18nText "I am {0} years old." ["24"])
 ```
 
 
 ## Documentation
 
-### `config : Config`
-Helps you start chaining a configuration together.
+### `type Language`
+Type representing a language identifier.
 
-### `(~) : Config -> (String, String) -> Config`
-Attaches a key-value pair to the config under the current language. You must first use `($)` to attach a language before you can begin attaching key-value pairs.
-```elm
-config
-    $ "en-us"
-        ~ ("color", "color")
-    $ "en-gb"
-        ~ ("color", "colour")
-```
+### `withLanguage : Language -> List (String, String) -> (Language, List (String, String))`
+Combines a language and a list of entries for consumption by createLookup. Just
+an alias for `(,)`.
 
-### `($) : Config -> String -> Config`
-Attaches all following key-value pairs to the given language identifier.
-```elm
-config
-    $ "en-us"
-        ~ ("hello", "world")
-        ~ ("key", "value")
-```
-
-### `create : Config -> (String -> String -> List String -> String)`
-Takes a config generated from the chaining operators and returns a lookup
-function you can use in your `view`s. The function accepts a language
-identifier, a key, and a list of strings to interpolate into the string value.
-If the key or the language does not exist you will see an error message
-returned.
+### `createLookup : List (Language, List (String, String)) -> (Language -> String -> List String -> String)
+`
+Creates a function that can be used to lookup and interpolate a key for a given
+language, returning the key as the value if the language or key cannot be found
+in the configuration.

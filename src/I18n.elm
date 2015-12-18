@@ -1,144 +1,82 @@
-module I18n
-    ( create
-    , config
-    , ($)
-    , (~)
-    ) where
+module I18n (Language(Language), withLanguage, createLookup) where
 
-{-| Internationalization DSL for Elm
+{-|
 
-# Entries
-@docs config, ($), (~)
-
-# Lookup
-@docs create
+@docs Language, withLanguage, createLookup
 
 -}
 
-import Maybe exposing (Maybe(..))
 import Dict exposing (Dict)
+import Maybe exposing (Maybe(..))
 import String.Interpolate exposing (interpolate)
 
 
-type Config
-    = ValidConfig (Maybe String) (List Entry)
-    | InvalidConfig
-
-
-type alias Entry =
-    { lang : String
-    , key : String
-    , value : String
-    }
-
-
-group : (a -> comparable) -> List a -> Dict comparable (List a)
-group grouper list =
-    let
-        folder entry dict =
-            let
-                entryIdentifier =
-                    grouper entry
-
-                lookedUp =
-                    Dict.get entryIdentifier dict
-            in
-                case lookedUp of
-                    Just groupedEntries ->
-                        Dict.insert entryIdentifier (entry :: groupedEntries) dict
-
-                    Nothing ->
-                        Dict.insert entryIdentifier [ entry ] dict
-    in
-        List.foldl folder Dict.empty list
-
-
-{-| An empty config from which to start buiding your own
+{-| Type representing a language identifier
 -}
-config : Config
-config =
-    ValidConfig Nothing []
+type Language
+    = Language String
 
-{-| Attaches a language identifier to any following key value declarations.
-    config
-        $ "en-us"
-            ~ ("hello", "world")
-            ~ ("key", "value")
+
+type alias Entries =
+    Dict String String
+
+
+type alias LanguageConfig =
+    Dict String Entries
+
+
+type alias LookupFunction =
+    Language -> String -> List String -> String
+
+
+{-| Combines a language and a list of entries for consumption by createLookup
 -}
-($) : Config -> String -> Config
-($) config lang =
-    case config of
-        ValidConfig activeLang entries ->
-            ValidConfig (Just lang) entries
-
-        InvalidConfig ->
-            InvalidConfig
-
-{-| Attaches a key value pair to the configuration chain. You cannot attach
-key value configurations without first providing a language id to attach to.
-    config
-        $ "en-us"
-            ~ ("hello", "world")
-            ~ ("key", "value")
--}
-(~) : Config -> ( String, String ) -> Config
-(~) config ( key, value ) =
-    case config of
-        ValidConfig activeLang entries ->
-            case activeLang of
-                Just lang ->
-                    Entry lang key value
-                        |> flip (::) entries
-                        |> ValidConfig (Just lang)
-
-                Nothing ->
-                    InvalidConfig
-
-        InvalidConfig ->
-            InvalidConfig
+withLanguage : Language -> List ( String, String ) -> ( Language, List ( String, String ) )
+withLanguage =
+    (,)
 
 
-invalidConfigMessage : String
-invalidConfigMessage =
-    "<I18n -- CONFIG IS INVALID>"
+{-| Creates a function that can be used to lookup and interpolate a key for a
+given language, returning the key as the value if the language or key cannot
+be found in the configuration
 
-keyNotFoundMessage : String -> String -> String
-keyNotFoundMessage key lang =
-    interpolate "<I18n -- KEY {0} NOT FOUND FOR LANG {1}>" [key, lang]
+    french =
+        Language "fr-fr"
 
-{-| Creates a lookup function from a config that you can call to retrieve
-formatted String values for keys based on the current language, or curry with
-the current language for easier access.
     i18nText =
-        create <| config
-            $ "en-us"
-                ~ ("hello", "world{0}")
+        createLookup
+            [ withLanguage
+                french
+                [ ( "good day", "bonjour" )
+                , ( "I am {0} years old.", "J'ai {0} ans." )
+                ]
 
-    i18nText "en-us" "hello" ["!"] == "world!"
-    i18nText "nope" "hello" ["!"] == "<KEY notThere NOT FOUND FOR LANG nope>"
+    result =
+        i18nText french "I am {0} years old." [ "24" ]
+
+    {- result == "J'ai 24 ans." -}
 -}
-create : Config -> String -> String -> List String -> String
-create config =
-    case config of
-        InvalidConfig ->
-            \a b c -> invalidConfigMessage
+createLookup : List ( Language, List ( String, String ) ) -> LookupFunction
+createLookup configList =
+    let
+        convertEntryToTuple ( language, entriesTuples ) =
+            case language of
+                Language name ->
+                    ( name, Dict.fromList entriesTuples )
 
-        ValidConfig _ entries ->
-            let
-                mapEntryToKeyValue entry =
-                    ( .key entry, .value entry )
+        lookupDict =
+            configList
+                |> List.map convertEntryToTuple
+                |> Dict.fromList
 
-                lookupDict =
-                    entries
-                        |> group .lang
-                        |> Dict.map (\_ entry -> List.map mapEntryToKeyValue entry)
-                        |> Dict.map (\_ entry -> Dict.fromList entry)
-
-                findEntry lang key interpolations =
-                    Dict.get lang lookupDict
+        lookupFunction language key interpolations =
+            case language of
+                Language name ->
+                    lookupDict
+                        |> Dict.get name
                         |> Maybe.withDefault Dict.empty
                         |> Dict.get key
-                        |> Maybe.withDefault (keyNotFoundMessage key lang)
-                        |> flip interpolate interpolations
-            in
-                findEntry
+                        |> Maybe.withDefault key
+                        |> (flip interpolate) interpolations
+    in
+        lookupFunction
