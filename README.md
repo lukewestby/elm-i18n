@@ -6,12 +6,10 @@ a convenient function that allows selection of language and keys as well as
 [interpolation](https://github.com/lukewestby/elm-string-interpolate) that you
 can use right in your `view` functions.
 
-**This project is not finished!**
-
-The API is entirely up for discussion and will definitely change before release
-on `packages.elm-lang.org`. Any input and pull requests are very welcome and
-encouraged. If you'd like to help or have ideas, get in touch with me at
-@luke_dot_js on Twitter or @luke in the elmlang Slack!
+ This package is still in early stages and I'm actively seeking feedback and
+thinking about additional features. Any input and pull requests are very
+welcome and encouraged. If you'd like to help or have ideas, get in touch with
+me at @luke_dot_js on Twitter or @luke in the elmlang Slack!
 
 ## Example
 ```elm
