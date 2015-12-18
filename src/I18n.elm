@@ -1,6 +1,7 @@
 module I18n (Language(Language), withLanguage, createLookup) where
 
-{-|
+{-| I18n helps you generate a lookup function to easily internationalize your
+applications.
 
 @docs Language, withLanguage, createLookup
 
@@ -15,18 +16,6 @@ import String.Interpolate exposing (interpolate)
 -}
 type Language
     = Language String
-
-
-type alias Entries =
-    Dict String String
-
-
-type alias LanguageConfig =
-    Dict String Entries
-
-
-type alias LookupFunction =
-    Language -> String -> List String -> String
 
 
 {-| Combines a language and a list of entries for consumption by createLookup
@@ -56,7 +45,7 @@ be found in the configuration
 
     {- result == "J'ai 24 ans." -}
 -}
-createLookup : List ( Language, List ( String, String ) ) -> LookupFunction
+createLookup : List ( Language, List ( String, String ) ) -> ( Language -> String -> List String -> String )
 createLookup configList =
     let
         convertEntryToTuple ( language, entriesTuples ) =
