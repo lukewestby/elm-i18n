@@ -67,8 +67,7 @@ Type representing a language identifier.
 Combines a language and a list of entries for consumption by createLookup. Just
 an alias for `(,)`.
 
-### `createLookup : List (Language, List (String, String)) -> (Language -> String -> List String -> String)
-`
+### `createLookup : List (Language, List (String, String)) -> (Language -> String -> List String -> String)`
 Creates a function that can be used to lookup and interpolate a key for a given
 language, returning the key as the value if the language or key cannot be found
 in the configuration.
