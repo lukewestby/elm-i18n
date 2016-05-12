@@ -1,6 +1,7 @@
-> NOTICE: The API is getting overhauled in the coming 2.0.0 to provide type
-> checking for templates and help make it possible to minimize the translation
-> content that actually ends up in the build. Keep an eye out!
+> NOTICE: This package is deprecated in favor of the pattern proposed by
+> @amitaibu in [this article](http://www.gizra.com/content/elm-i18n-type-safety/).
+> lukewestby/elm-i18n will not be updated for Elm 0.17 to help communicate
+> deprecation.
 
 # elm-i18n
 `I18n` helps you generate a lookup function to easily internationalize your
